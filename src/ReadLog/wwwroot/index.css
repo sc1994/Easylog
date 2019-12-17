@@ -1,0 +1,70 @@
+.clearfix:before,
+.clearfix:after {
+    display: table;
+    content: "";
+}
+
+.clearfix:after {
+    clear: both
+}
+
+.box-card {
+    width: 100%;
+}
+
+.el-col-2 {
+    text-align: right;
+    padding-top: 9px;
+}
+
+.el-col-1 {
+    text-align: right;
+    padding-top: 9px;
+}
+
+.rotate {
+    animation: rotating 2s linear infinite;
+}
+
+.el-table .warning-row {
+    background: rgb(250, 236, 216);
+}
+
+.el-table .error-row {
+    background: rgb(253, 226, 226);
+}
+
+.span-long-text {
+    line-height: 30px;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+textarea {
+    background-color: #000033 !important;
+    color: #EEEEEE !important;
+}
+
+.el-dialog {
+    margin-top: 6vh !important;
+}
+
+.el-dialog__body {
+    padding-top: 5px;
+}
+
+em {
+    color: red;
+}
+
+.el-dialog__body .el-row {
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+
+/* .el-table th,
+.el-table {
+    background-color: #EBEEF5
+} */

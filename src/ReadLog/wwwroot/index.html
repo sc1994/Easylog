@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.bootcss.com/element-ui/2.11.1/theme-chalk/index.css" rel="stylesheet">
+    <link rel="stylesheet" href="index.css?v=4">
+</head>
+
+<body>
+    <div id="app">
+        <el-card class="box-card" shadow="hover">
+            <div slot="header" class="clearfix">
+                <span>搜索条件</span>
+            </div>
+            <el-form :model="filtrate" label-width="80px" :inline="true">
+                <el-form-item label="筛选" style="width: 850px;">
+                    <el-cascader :options="classifies" clearable filterable :filter-method="cascaderFilterMethod"
+                        v-model="filtrate.classifies" :props="{ checkStrictly:true }" style="width: 645px;">
+                    </el-cascader>
+                    <el-checkbox v-model="filtrate.loseParent" label="忽略父级" border style="width: 120px;"></el-checkbox>
+                </el-form-item>
+                <el-form-item label="过滤" style="width: 850px;">
+                    <el-input v-model="filtrate.filter1" placeholder="过滤1" style="width: 382px;"></el-input>
+                    <el-input v-model="filtrate.filter2" placeholder="过滤2" style="width: 382px;"></el-input>
+                </el-form-item>
+                <el-form-item label="关键字" style="width: 850px;">
+                    <el-input v-model="filtrate.msg" style="width: 645px;"
+                        placeholder="关键字排序将会扰乱时间顺序, 以输入内容的匹配度为排序依据! 请严格限制时间范围">
+                    </el-input>
+                    <el-checkbox v-model="filtrate.keywordSort" label="关键字排序" border style="width: 120px;">
+                    </el-checkbox>
+                </el-form-item>
+                <el-form-item label="级别">
+                    <el-select v-model="filtrate.lv" clearable>
+                        <el-option label="Information" value="Information"></el-option>
+                        <el-option label="Warning" value="Warning"></el-option>
+                        <el-option label="Error" value="Error"></el-option>
+                        <el-option label="Debug" value="Debug"></el-option>
+                        <el-option label="Fatal" value="Fatal"></el-option>
+                    </el-select>
+                </el-form-item>
+                <!-- <el-form-item label="Ip">
+                    <el-select v-model="filtrate.ip" clearable style="width:100%">
+                        <el-option v-for="item in ips" :key="item" :label="item" :value="item">
+                        </el-option>
+                    </el-select>
+                </el-form-item> -->
+                <el-form-item label="时间">
+                    <el-date-picker v-if="switchTime" v-model="filtrate.times" type="datetimerange" range-separator="至"
+                        start-placeholder="开始日期" end-placeholder="结束日期" align="right"
+                        value-format="yyyy-MM-dd HH:mm:ss">
+                    </el-date-picker>
+                    <el-select v-else v-model="filtrate.timeSelect">
+                        <el-option label="最近10分钟" value="10"></el-option>
+                        <el-option label="最近30分钟" value="30"></el-option>
+                        <el-option label="最近1小时" value="60"></el-option>
+                        <el-option label="最近8小时" value="480"></el-option>
+                    </el-select>
+                    <el-button icon="el-icon-full-screen" circle @click="switchTime = !switchTime"></el-button>
+                </el-form-item>
+                <br />
+                <el-form-item>
+                    <el-button type="primary" icon="el-icon-filtrate" @click="search(1)"
+                        :loading="loading && !autoRefresh">
+                        搜索</el-button>
+                    <el-button type="primary" icon="el-icon-refresh rotate" @click="autoRefresh = false"
+                        v-if="autoRefresh" :loading="loading && autoRefresh">
+                    </el-button>
+                    <el-button type="primary" icon="el-icon-refresh" @click="autoRefresh = true" v-else></el-button>
+                </el-form-item>
+            </el-form>
+            <br>
+            <!-- <el-row :gutter="5">
+                
+            </el-row> -->
+        </el-card>
+        <el-divider content-position="left">搜索结果</el-divider>
+        <el-table :data="tableData" border style="width: 100%" @row-dblclick="showDetail" v-loading="loading"
+            :row-class-name="tableRowClassName">>
+            <el-table-column prop="timestamp" label="时间" width="195">
+            </el-table-column>
+            <el-table-column prop="level" label="等级" width="110">
+                <template slot-scope="scope">
+                    <span>{{scope.row.level}}</span>
+                </template>
+            </el-table-column>
+            <el-table-column prop="module" label="项目/模块/大类/小类">
+                <template slot-scope="scope">
+                    <span class="span-long-text" :title="scope.row.app + '/' + scope.row.module + '/' + scope.row.category + '/' +
+                        scope.row.sub_category">
+                        <span>{{scope.row.app}}</span>/
+                        <span>{{scope.row.module}}</span>/
+                        <span>{{scope.row.category}}</span>/
+                        <span>{{scope.row.sub_category}}</span>
+                    </span>
+                </template>
+            </el-table-column>
+
+            <el-table-column prop="msg" label="Msg">
+                <template slot-scope="scope">
+                    <span class="span-long-text" v-if="scope.row['fields.msg'] && scope.row['fields.msg'][0]"
+                        v-html="scope.row['fields.msg'][0]"></span>
+                    <span class="span-long-text" v-else>{{scope.row.msg}}</span>
+                </template>
+            </el-table-column>
+            <!-- <el-table-column prop="ip" label="Ip" width="120">
+            </el-table-column> -->
+        </el-table>
+        <div style="padding: 20px;text-align: right">
+            <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                :current-page.sync="currentPage" :page-sizes="[5, 10, 50, 100]" :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper" :total="total">
+            </el-pagination>
+        </div>
+        <br><br>
+        <el-dialog :title="current.module+' / '+current.category+' / '+current.sub_category"
+            :visible.sync="dialogVisible" width="60%" height="95%">
+            <el-table :data="[{...current}]" style="width: 100%">
+                <el-table-column prop="timestamp" label="时间戳">
+                </el-table-column>
+                <el-table-column prop="app" label="项目">
+                </el-table-column>
+                <el-table-column prop="level" label="等级">
+                </el-table-column>
+                <el-table-column prop="filter1" label="过滤1" v-if="current.filter1">
+                </el-table-column>
+                <el-table-column prop="filter2" label="过滤2" v-if="current.filter2">
+                </el-table-column>
+            </el-table>
+            <div v-if="current['fields.msg']">
+                <el-divider content-position="left">含有关键字片段</el-divider>
+                <p v-for="item in current['fields.msg']" :key="item" v-html="item">
+                </p>
+            </div>
+            <br>
+            <el-input type="textarea" :autosize="{ minRows: 1, maxRows: 25 }" :value="toJsonFormat(current.msg)"
+                spellcheck="true">
+            </el-input>
+            <br><br>
+            <el-button style="float: right" type="success" round
+                v-if="current.module=='RequestLog' || current.module=='InitResponseNewSafety'" @click="toMock">
+                Mock</el-button>
+            <br>
+        </el-dialog>
+    </div>
+</body>
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdn.bootcss.com/vue/2.6.10/vue.js"></script>
+<script src="https://cdn.bootcss.com/element-ui/2.11.1/index.js"></script>
+<script src="https://cdn.bootcss.com/axios/0.19.0/axios.min.js"></script>
+<script src="const.js?v=5"></script>
+<script src="index.js?v=5"></script>
+
+</html>
