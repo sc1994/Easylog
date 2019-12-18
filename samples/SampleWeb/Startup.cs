@@ -27,7 +27,7 @@ namespace SampleWeb
             services.AddControllers();
 
             services.AddHttpContextAccessor();
-            services.AddEasyLog();
+            services.AddEasyLogger();
 
             services.AddScoped<LogTestService, LogTestService>();
         }
@@ -52,7 +52,7 @@ namespace SampleWeb
                 endpoints.MapControllers();
             });
 
-            app.UseEasyLog(options =>
+            app.UseEasyLogger(options =>
             {
                 options.App = "SampleWeb";
                 options.Debug = true;

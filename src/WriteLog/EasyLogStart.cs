@@ -11,12 +11,12 @@ namespace EasyLog.WriteLog
         internal static string App { get; private set; }
         internal static bool Debug { get; private set; }
 
-        public static void AddEasyLog(this IServiceCollection services)
+        public static void AddEasyLogger(this IServiceCollection services)
         {
             services.AddScoped<EasyLogger, EasyLogger>();
         }
 
-        public static void UseEasyLog(this IApplicationBuilder app, Action<EasyLogOption> options)
+        public static void UseEasyLogger(this IApplicationBuilder app, Action<EasyLogOption> options)
         {
             if (app is null) throw new ArgumentNullException(nameof(app));
             if (options is null) throw new ArgumentNullException(nameof(options));
