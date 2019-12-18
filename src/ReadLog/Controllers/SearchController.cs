@@ -16,7 +16,7 @@ namespace ReadLog.Controllers
     [ApiController]
     public class SearchController : ControllerBase
     {
-        private const string EsNode = "http://10.101.72.28:9222";
+        private const string EsNode = "http://localhost:9222";
 
         /// <summary>
         /// 获取聚合数据
