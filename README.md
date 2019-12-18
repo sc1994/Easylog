@@ -1,4 +1,4 @@
-# EastLog
+# EasyLog
 
 简单通用的日志记录和查询工具
 
@@ -93,7 +93,7 @@ easy_logger("SampleWeb","Services","Class1","TestLog()","just test",null,null,"1
 easy_logger("SampleWeb","Services","Class1","TestLog()","{\"mission\":\"just test\"}",null,null,"10.0.75.1","1a013666-7eb7-49ce-99e3-2ebb3932c304",["SampleWeb.Controllers.WeatherForecastController.Get()", "SampleWeb.Services.LogTestService.Log()"],null)
 ```
 
-虽然生产日志的地方只传入了一个字符串, 但是根据当前日志的堆栈 `System.Environment.StackTrace` , 对日志添加 `{app},{category1},{category2},{category3},{calls}` 参数.   
+虽然生产日志的地方只传入了一个字符串, 但是根据当前日志的堆栈 `System.Environment.StackTrace` , 对日志添加 `{app},{category1},{category2},{category3},{calls}` 参数.  
 
 根据 `HttpContextAccessor` 对日志添加 `{trace}` 参数.  
 这就是最终日志的效果
