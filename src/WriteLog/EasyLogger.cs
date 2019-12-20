@@ -9,8 +9,6 @@ namespace EasyLog.WriteLog
 {
     public class EasyLogger
     {
-        private const string _messageTemp = "easy_logger({app},{category1},{category2},{category3},{log},{filter1},{filter2},{ip},{trace},{calls},{exception})";
-        private const string _traceName = "easy_logger_trace_mame";
         private readonly string _trace;
 
         public EasyLogger(IHttpContextAccessor httpAccessor)
@@ -133,7 +131,7 @@ namespace EasyLog.WriteLog
                 log,
                 filter1,
                 filter2,
-                Extends.GetLocalIpAddress(),
+                Stores.Ip,
                 _trace,
                 calls,
                 exception?.ToString()
@@ -141,13 +139,13 @@ namespace EasyLog.WriteLog
             switch (level)
             {
                 case LogEventLevel.Debug:
-                    EasyLogStart.Logger.Debug(_messageTemp, @params); return;
+                    EasyLogStart.Logger.Debug(Stores.MessageTemp, @params); return;
                 case LogEventLevel.Information:
-                    EasyLogStart.Logger.Information(_messageTemp, @params); return;
+                    EasyLogStart.Logger.Information(Stores.MessageTemp, @params); return;
                 case LogEventLevel.Warning:
-                    EasyLogStart.Logger.Warning(_messageTemp, @params); return;
+                    EasyLogStart.Logger.Warning(Stores.MessageTemp, @params); return;
                 case LogEventLevel.Error:
-                    EasyLogStart.Logger.Error(_messageTemp, @params); return;
+                    EasyLogStart.Logger.Error(Stores.MessageTemp, @params); return;
             }
         }
 
@@ -185,7 +183,7 @@ namespace EasyLog.WriteLog
             }
             catch (Exception exception)
             {
-                // TODO: ERROR LOG
+                Error("解析堆栈获取分类信息失败:" + stackTrace, exception);
                 goto ReturnDefault;
             }
 
@@ -219,9 +217,9 @@ namespace EasyLog.WriteLog
                 "无法捕获IHttpContextAccessor".WriteLine();
                 return null;
             }
-            var t = (string)httpAccessor.HttpContext.Items[_traceName];
+            var t = (string)httpAccessor.HttpContext.Items[Stores.TraceName];
             if (string.IsNullOrWhiteSpace(t))
-                return (string)(httpAccessor.HttpContext.Items[_traceName] = Guid.NewGuid().ToString());
+                return (string)(httpAccessor.HttpContext.Items[Stores.TraceName] = Guid.NewGuid().ToString());
             return t;
         }
     }

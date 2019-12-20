@@ -37,5 +37,12 @@ namespace SampleWeb.Controllers
             })
             .ToArray();
         }
+
+        [HttpPost]
+        public object Post(object request)
+        {
+            // _log.Information(request);
+            return request;
+        }
     }
 }

@@ -1,10 +1,17 @@
 using System;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using EasyLog.WriteLog;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 using SampleWeb.Services;
 using Serilog;
 using Serilog.Events;
@@ -26,6 +33,15 @@ namespace SampleWeb
         {
             services.AddControllers();
 
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "SampleWeb",
+                    Version = "v1"
+                });
+            });
+
             services.AddHttpContextAccessor();
             services.AddEasyLogger();
 
@@ -41,6 +57,13 @@ namespace SampleWeb
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+                // 启用 http 日志
+                app.UseEasyLogHttp(options =>
+                {
+                    options.IsLoggingRequestBody = true;
+                    options.IsLoggingResponseBody = false;
+                });
             }
 
             app.UseRouting();
@@ -52,10 +75,17 @@ namespace SampleWeb
                 endpoints.MapControllers();
             });
 
+            app.UseSwagger();
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("../swagger/v1/swagger.json", "SampleWeb");
+            });
+
+            // 启用 easy log 
             app.UseEasyLogger(options =>
             {
-                options.App = "SampleWeb";
-                options.Debug = true;
+                options.AppId = "SampleWeb";
+                options.IsDebug = false;
                 options.Serilog =
                     new LoggerConfiguration()
                         .WriteTo.ColoredConsole(
@@ -68,6 +98,54 @@ namespace SampleWeb
                         })
                         .CreateLogger();
             });
+        }
+    }
+
+
+    public class RequestLoggingMiddleware
+    {
+        private readonly RequestDelegate _next;
+        private readonly ILogger<RequestLoggingMiddleware> _logger;
+
+        public RequestLoggingMiddleware(
+        RequestDelegate next,
+        ILogger<RequestLoggingMiddleware> logger)
+        {
+            _next = next;
+            _logger = logger;
+        }
+
+        public async Task Invoke(HttpContext context)
+        {
+            var injectedRequestStream = new MemoryStream();
+
+            try
+            {
+                var requestLog =
+                $"REQUEST HttpMethod: {context.Request.Method}, Path: {context.Request.Path}";
+
+                using (var bodyReader = new StreamReader(context.Request.Body))
+                {
+                    var bodyAsText = bodyReader.ReadToEnd();
+                    if (string.IsNullOrWhiteSpace(bodyAsText) == false)
+                    {
+                        requestLog += $", Body : {bodyAsText}";
+                    }
+
+                    var bytesToWrite = Encoding.UTF8.GetBytes(bodyAsText);
+                    injectedRequestStream.Write(bytesToWrite, 0, bytesToWrite.Length);
+                    injectedRequestStream.Seek(0, SeekOrigin.Begin);
+                    context.Request.Body = injectedRequestStream;
+                }
+
+                _logger.LogTrace(requestLog);
+
+                await _next.Invoke(context);
+            }
+            finally
+            {
+                injectedRequestStream.Dispose();
+            }
         }
     }
 }
