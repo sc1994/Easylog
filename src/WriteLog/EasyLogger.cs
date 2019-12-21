@@ -13,7 +13,7 @@ namespace EasyLog.WriteLog
 
         public EasyLogger(IHttpContextAccessor httpAccessor)
         {
-            _trace = GetTrace(httpAccessor);
+            _trace = Stores.GetTrace(httpAccessor.HttpContext);
         }
         /// <summary>
         /// Debug
@@ -203,24 +203,6 @@ namespace EasyLog.WriteLog
                                     && !x.Contains(@"WriteLog\EasyLogger.cs"));
             ats.WriteLine("筛选堆栈中包含文件和方法调用的文本行");
             return ats.ToArray();
-        }
-
-
-
-        /// <summary>
-        /// 获取追踪guid, 此值藏于 HttpContext.Items 中 . 
-        /// </summary>
-        private string GetTrace(IHttpContextAccessor httpAccessor)
-        {
-            if (httpAccessor?.HttpContext?.Items == null)
-            {
-                "无法捕获IHttpContextAccessor".WriteLine();
-                return null;
-            }
-            var t = (string)httpAccessor.HttpContext.Items[Stores.TraceName];
-            if (string.IsNullOrWhiteSpace(t))
-                return (string)(httpAccessor.HttpContext.Items[Stores.TraceName] = Guid.NewGuid().ToString());
-            return t;
         }
     }
 }

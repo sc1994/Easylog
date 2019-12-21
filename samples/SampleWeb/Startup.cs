@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EasyLog.WriteLog;
@@ -61,8 +63,49 @@ namespace SampleWeb
                 // 启用 http 日志
                 app.UseEasyLogHttp(options =>
                 {
-                    options.IsLoggingRequestBody = true;
-                    options.IsLoggingResponseBody = false;
+                    options.LoggingRequest = new LoggingHttpItem
+                    {
+                        IsIncludeBody = true,
+                        IncludeHeaders = new List<string>
+                        {
+                            "Content-Type",
+                            "Host",
+                            "User-Agent",
+                            "Origin",
+                            "Content-Length"
+                        },
+                        IsIncludeCookies = true
+                    };
+                    options.LoggingResponse = new LoggingHttpItem
+                    {
+                        IsIncludeBody = true,
+                        IncludeHeaders = new List<string>
+                        {
+                            "Content-Type",
+                            "Server"
+                        }
+                    };
+                    options.Filter1 = new FilterGetWayDictionary
+                    {
+                        FilterWay = FilterGetWayDictionaryEnum.RequestHeaders,
+                        GetFilterFunc = headers =>
+                        {
+                            // 建议在配置获取过滤规则的时候, 尽量做一些容错判定, 虽然内部代码会去兼容异常, 但是过于频繁的异常捕获是会消耗一定性能的
+                            return headers.FirstOrDefault(x => x.Key == "Content-Type").Value;
+                        }
+                    };
+                    options.Filter2 = new FilterGetWayString
+                    {
+                        FilterWay = FilterGetWayStringEnum.Url,
+                        GetFilterFunc = url =>
+                        {
+                            var a = url.Split(new[] { "?id=" }, StringSplitOptions.RemoveEmptyEntries);
+                            if (a.Length == 2) return a[1].Split('&')[0]; // 获取url的params为id的值
+
+                            a = url.Split('/');
+                            return a[a.Length - 1].Split('?')[0]; // 打底规则, 如果上面的规则没有匹配, 则获取url地址的最后一位
+                        }
+                    };
                 });
             }
 

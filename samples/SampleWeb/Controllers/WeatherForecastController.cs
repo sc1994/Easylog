@@ -41,6 +41,7 @@ namespace SampleWeb.Controllers
         [HttpPost]
         public object Post(object request)
         {
+            // throw new Exception("asdasds");
             // _log.Information(request);
             return request;
         }
