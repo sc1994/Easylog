@@ -27,7 +27,8 @@ namespace SampleWeb.Controllers
         [HttpGet]
         public IEnumerable<WeatherForecast> Get()
         {
-            _service.Log();
+            // _service.Log();
+            _log.Information("just information", filter1: "testF1");
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {

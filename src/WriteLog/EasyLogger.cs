@@ -11,6 +11,8 @@ namespace EasyLog.WriteLog
     {
         private readonly string _trace;
 
+        public EasyLogger() { }
+
         public EasyLogger(IHttpContextAccessor httpAccessor)
         {
             _trace = Stores.GetTrace(httpAccessor.HttpContext);
