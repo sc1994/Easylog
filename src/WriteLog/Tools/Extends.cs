@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using Newtonsoft.Json;
 
 namespace EasyLog.WriteLog
@@ -19,9 +17,9 @@ namespace EasyLog.WriteLog
             if (!EasyLogStart.Debug) return;
             // return;
             Trace.WriteLine($@"
-=================================={title}===========================================
+EasyLog=============================={title}==============================EasyLog
 {msg}
-==================================={title}==========================================
+EasyLog=============================={title}==============================EasyLog
             ");
         }
 

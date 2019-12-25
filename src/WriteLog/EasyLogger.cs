@@ -4,18 +4,21 @@ using Microsoft.AspNetCore.Http;
 using static Newtonsoft.Json.JsonConvert;
 using static EasyLog.WriteLog.EasyLogStart;
 using Serilog.Events;
+using Microsoft.Extensions.Hosting;
 
 namespace EasyLog.WriteLog
 {
     public class EasyLogger
     {
         private readonly string _trace;
+        private readonly string _env;
 
         public EasyLogger() { }
 
-        public EasyLogger(IHttpContextAccessor httpAccessor)
+        public EasyLogger(IHttpContextAccessor httpAccessor, IHostEnvironment env)
         {
             _trace = Stores.GetTrace(httpAccessor.HttpContext);
+            _env = Stores.GetEnvironment(httpAccessor.HttpContext, env);
         }
         /// <summary>
         /// Debug
@@ -136,6 +139,7 @@ namespace EasyLog.WriteLog
                 Stores.Ip,
                 _trace,
                 calls,
+                _env,
                 exception?.ToString()
             };
             switch (level)

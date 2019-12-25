@@ -1,18 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EasyLog.WriteLog;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using SampleWeb.Services;
 using Serilog;
@@ -51,63 +43,61 @@ namespace SampleWeb
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(
-            IApplicationBuilder app,
-            IWebHostEnvironment env
-        )
+        public void Configure(IApplicationBuilder app)
         {
-            if (env.IsDevelopment())
+            // 启用 http 日志
+            app.UseEasyLogHttp(options =>
             {
-                app.UseDeveloperExceptionPage();
-
-                // 启用 http 日志
-                app.UseEasyLogHttp(options =>
+                options.RequestOption = new HttpOptionItem
                 {
-                    options.LoggingRequest = new LoggingHttpItem
+                    IsHasBody = true,
+                    HasHeaders = new []
                     {
-                        IsIncludeBody = true,
-                        IncludeHeaders = new List<string>
-                        {
-                            "Content-Type",
-                            "Host",
-                            "User-Agent",
-                            "Origin",
-                            "Content-Length"
-                        },
-                        IsIncludeCookies = true
-                    };
-                    options.LoggingResponse = new LoggingHttpItem
+                        "Content-Type",
+                        "Host",
+                        "User-Agent",
+                        "Origin",
+                        "Content-Length"
+                    },
+                    IsHasCookies = true,
+                    BodySizeLimit = 1024 * 10,
+                };
+                options.ResponseOption = new HttpOptionItem
+                {
+                    IsHasBody = true,
+                    HasHeaders = new []
                     {
-                        IsIncludeBody = true,
-                        IncludeHeaders = new List<string>
-                        {
-                            "Content-Type",
-                            "Server"
-                        }
-                    };
-                    options.Filter1 = new FilterGetWayDictionary
+                        "Content-Type",
+                        "Server",
+                        "Content-Length"
+                    },
+                    BodySizeLimit = 1024 * 30
+                };
+                options.Filter1 = new FilterGetWayByDictionary
+                {
+                    FilterWay = FilterGetWayDictionaryEnum.RequestHeaders,
+                    GetFilterFunc = headers =>
                     {
-                        FilterWay = FilterGetWayDictionaryEnum.RequestHeaders,
-                        GetFilterFunc = headers =>
-                        {
-                            // 建议在配置获取过滤规则的时候, 尽量做一些容错判定, 虽然内部代码会去兼容异常, 但是过于频繁的异常捕获是会消耗一定性能的
-                            return headers.FirstOrDefault(x => x.Key == "Content-Type").Value;
-                        }
-                    };
-                    options.Filter2 = new FilterGetWayString
+                        // if (headers.TryGetValue("", out var v))
+                        //     return v;
+                        // return null;
+                        // 建议在配置获取过滤规则的时候, 尽量做一些容错判定, 虽然内部代码会去兼容异常, 但是过于频繁的异常捕获是会消耗一定性能的
+                        return headers.FirstOrDefault(x => x.Key == "Content-Type").Value;
+                    }
+                };
+                options.Filter2 = new FilterGetWayByString
+                {
+                    FilterWay = FilterGetWayStringEnum.Url,
+                    GetFilterFunc = url =>
                     {
-                        FilterWay = FilterGetWayStringEnum.Url,
-                        GetFilterFunc = url =>
-                        {
-                            var a = url.Split(new[] { "?id=" }, StringSplitOptions.RemoveEmptyEntries);
-                            if (a.Length == 2) return a[1].Split('&')[0]; // 获取url的params为id的值
+                        var a = url.Split(new[] { "?id=" }, StringSplitOptions.RemoveEmptyEntries);
+                        if (a.Length == 2) return a[1].Split('&')[0]; // 获取url的params为id的值
 
-                            a = url.Split('/');
-                            return a[a.Length - 1].Split('?')[0]; // 打底规则, 如果上面的规则没有匹配, 则获取url地址的最后一位
-                        }
-                    };
-                });
-            }
+                        a = url.Split('/');
+                        return a[a.Length - 1].Split('?')[0]; // 打底规则, 如果上面的规则没有匹配, 则获取url地址的最后一位
+                    }
+                };
+            });
 
             app.UseRouting();
 
@@ -128,7 +118,7 @@ namespace SampleWeb
             app.UseEasyLogger(options =>
             {
                 options.AppId = "SampleWeb";
-                options.IsDebug = false;
+                options.IsDebug = true;
                 options.Serilog =
                     new LoggerConfiguration()
                         .WriteTo.ColoredConsole(
@@ -141,54 +131,6 @@ namespace SampleWeb
                         })
                         .CreateLogger();
             });
-        }
-    }
-
-
-    public class RequestLoggingMiddleware
-    {
-        private readonly RequestDelegate _next;
-        private readonly ILogger<RequestLoggingMiddleware> _logger;
-
-        public RequestLoggingMiddleware(
-        RequestDelegate next,
-        ILogger<RequestLoggingMiddleware> logger)
-        {
-            _next = next;
-            _logger = logger;
-        }
-
-        public async Task Invoke(HttpContext context)
-        {
-            var injectedRequestStream = new MemoryStream();
-
-            try
-            {
-                var requestLog =
-                $"REQUEST HttpMethod: {context.Request.Method}, Path: {context.Request.Path}";
-
-                using (var bodyReader = new StreamReader(context.Request.Body))
-                {
-                    var bodyAsText = bodyReader.ReadToEnd();
-                    if (string.IsNullOrWhiteSpace(bodyAsText) == false)
-                    {
-                        requestLog += $", Body : {bodyAsText}";
-                    }
-
-                    var bytesToWrite = Encoding.UTF8.GetBytes(bodyAsText);
-                    injectedRequestStream.Write(bytesToWrite, 0, bytesToWrite.Length);
-                    injectedRequestStream.Seek(0, SeekOrigin.Begin);
-                    context.Request.Body = injectedRequestStream;
-                }
-
-                _logger.LogTrace(requestLog);
-
-                await _next.Invoke(context);
-            }
-            finally
-            {
-                injectedRequestStream.Dispose();
-            }
         }
     }
 }
