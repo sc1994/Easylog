@@ -53,6 +53,12 @@ namespace EasyLog.WriteLog
                     f1 = GetFilter(easyLog.Filter1, url, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, null); // TODO: response cookies
                     f2 = GetFilter(easyLog.Filter2, url, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, null); // TODO: response cookies
                 }
+                catch (EasyLogHttpException ex)
+                {
+                    exception = ex;
+                    if (ex.HasNext)
+                        await next();
+                }
                 catch (Exception ex)
                 {
                     // TODO 异常记录和异常抛出 , 目前整体抛出可能需要优化异常细节
@@ -61,6 +67,11 @@ namespace EasyLog.WriteLog
                 }
                 finally
                 {
+                    var t = new Dictionary<string, Dictionary<string, string>>
+                    {
+                        {"a",new Dictionary<string, string>{{"b","1"}}}
+                    };
+                    var t2 = new Dictionary<string, object> { { "a", t["a"] } };
                     var template = "easy_log_http({app},{method},{url},{requestHeaders},{requestBody},{requestCookies},{responseHeader},{responseBody},{responseCookies},{filter1},{filter2},{ip},{trace},{ex})";
                     var @params = new object[]
                         {
@@ -68,7 +79,7 @@ namespace EasyLog.WriteLog
                             method,
                             url,
                             requestHeaders,
-                            requestBody,
+                            t2,
                             requestCookies,
                             responseHeader,
                             responseBody,
@@ -94,11 +105,18 @@ namespace EasyLog.WriteLog
 
         private static IDictionary<string, string> GetRequestHeaders(HttpRequest request)
         {
-            if (RequestOption.HasHeaders?.Length > 0)
-                return request.Headers
-                              .Where(x => RequestOption.HasHeaders.Any(a => a == x.Key.ToLower()))
-                              .ToDictionary(x => x.Key, x => x.Value.ToString());
-            return null;
+            try
+            {
+                if (RequestOption.HasHeaders?.Length > 0)
+                    return request.Headers
+                                  .Where(x => RequestOption.HasHeaders.Any(a => a == x.Key.ToLower()))
+                                  .ToDictionary(x => x.Key, x => x.Value.ToString());
+                return null;
+            }
+            catch (Exception ex)
+            {
+                throw new EasyLogHttpException("获取 RequestHeader 发生异常: " + ex.Message, true, ex);
+            }
         }
 
         /// <summary>
@@ -106,32 +124,46 @@ namespace EasyLog.WriteLog
         /// </summary>
         private static async Task<string> GetRequestBodyAsync(HttpRequest request)
         {
-            if (RequestOption?.IsHasBody == true)
+            try
             {
-                if (int.TryParse(request.Headers["Content-Length"], out var contentLength)
-                    && contentLength > RequestOption.BodySizeLimit) // 拦截掉过大的请求体
-                    return null;
-                request.EnableBuffering(RequestOption.BodySizeLimit, RequestOption.BodySizeLimit);
-                using (var reader = new StreamReader(request.Body,
-                                                     Encoding.UTF8,
-                                                     false,
-                                                     RequestOption.BodySizeLimit,
-                                                     leaveOpen: true))
+                if (RequestOption?.IsHasBody == true)
                 {
-                    throw new Exception("kkkkk");
-                    var r = await reader.ReadToEndAsync();
-                    request.Body.Position = 0; // 重置到起点 , 被这个坑了好久
-                    return r;
+                    if (request?.Body == null) return null;
+                    if (int.TryParse(request.Headers["Content-Length"], out var contentLength)
+                        && contentLength > RequestOption.BodySizeLimit) // 拦截掉过大的请求体
+                        return null;
+                    request.EnableBuffering(RequestOption.BodySizeLimit, RequestOption.BodySizeLimit);
+                    using (var reader = new StreamReader(request.Body,
+                                                         Encoding.UTF8,
+                                                         false,
+                                                         RequestOption.BodySizeLimit,
+                                                         leaveOpen: true))
+                    {
+                        var r = await reader.ReadToEndAsync();
+                        request.Body.Position = 0; // 重置到起点 , 被这个坑了好久
+                        return r;
+                    }
                 }
+                return null;
             }
-            return null;
+            catch (Exception ex)
+            {
+                throw new EasyLogHttpException("获取 RequestBody 发生异常: " + ex.Message, true, ex);
+            }
         }
 
         private static IDictionary<string, string> GetRequestCookies(HttpRequest request)
         {
-            if (RequestOption?.IsHasCookies == true)
-                return request.Cookies.ToDictionary(x => x.Key, x => x.Value);
-            return null;
+            try
+            {
+                if (RequestOption?.IsHasCookies == true)
+                    return request.Cookies.ToDictionary(x => x.Key, x => x.Value);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                throw new EasyLogHttpException("获取 RequestCookies 发生异常: " + ex.Message, true, ex);
+            }
         }
 
         /// <summary>
@@ -139,49 +171,74 @@ namespace EasyLog.WriteLog
         /// </summary>
         private static async Task<string> GetResponseBodyAsync(HttpResponse response, Func<Task> next)
         {
-            string responseBody = null;
-            if (ResponseOption?.IsHasBody == true)
+            var hasNext = true; // 是否需要执行next在异常处理中, 用于在异常捕获之后不影响正常管道执行
+            var nexted = false; // next之后
+            try
             {
-                var originalBody = response.Body;
-                using (var memStream = new MemoryStream())
+                string responseBody = null;
+                if (ResponseOption?.IsHasBody == true)
                 {
-                    response.Body = memStream;
-                    await next();
-
-                    memStream.Position = 0;
-                    if (memStream.Length <= ResponseOption.BodySizeLimit)
+                    if (response?.Body == null) return null;
+                    var originalBody = response.Body;
+                    using (var memStream = new MemoryStream())
                     {
-                        responseBody = new StreamReader(memStream).ReadToEnd();
+                        response.Body = memStream;
+                        hasNext = false;
+                        await next();
+                        nexted = true;
                         memStream.Position = 0;
+                        if (memStream.Length <= ResponseOption.BodySizeLimit)
+                        {
+                            responseBody = new StreamReader(memStream).ReadToEnd();
+                            memStream.Position = 0;
+                        }
+                        await memStream.CopyToAsync(originalBody);
+                        response.Body = originalBody;
                     }
-                    await memStream.CopyToAsync(originalBody);
-                    response.Body = originalBody;
                 }
-            }
-            else
-            {
-                await next();
-                foreach (var item in response.Headers)
+                else
                 {
-                    (item.Key + ": " + item.Value).WriteLine();
+                    hasNext = false;
+                    await next();
+                    nexted = true;
                 }
+                return responseBody;
             }
-            return responseBody;
+            catch (Exception ex)
+            {
+                if (nexted) // next 执行之后的异常(我的读取body代码异常), 直接抛出
+                    throw new EasyLogHttpException("获取 ResponseBody 发生异常: " + ex.Message, hasNext, ex);
+                throw ex; // 将next中发生的异常向外抛出, 外层捕获并且在日志中呈现
+            }
         }
 
         private static IDictionary<string, string> GetResponseHeaders(HttpResponse response)
         {
-            // 响应 headers
-            if (ResponseOption?.HasHeaders?.Length > 0)
-                return response.Headers
-                               .Where(x => ResponseOption.HasHeaders.Any(a => a == x.Key.ToLower()))
-                               .ToDictionary(x => x.Key, x => x.Value.ToString());
-            return null;
+            try
+            {
+                // 响应 headers
+                if (ResponseOption?.HasHeaders?.Length > 0)
+                    return response.Headers
+                                   .Where(x => ResponseOption.HasHeaders.Any(a => a == x.Key.ToLower()))
+                                   .ToDictionary(x => x.Key, x => x.Value.ToString());
+                return null;
+            }
+            catch (Exception ex)
+            {
+                throw new EasyLogHttpException("获取 ResponseHeaders 发生异常: " + ex.Message, false, ex);
+            }
         }
 
         private static IDictionary<string, string> GetResponseCookies(HttpResponse request, HttpOption option)
         {
-            throw new NotImplementedException();
+            try
+            {
+                throw new NotImplementedException();
+            }
+            catch (Exception ex)
+            {
+                throw new EasyLogHttpException("获取 ResponseCookies 发生异常: " + ex.Message, false, ex);
+            }
         }
 
         private static string GetFilter(
@@ -195,31 +252,38 @@ namespace EasyLog.WriteLog
             IDictionary<string, string> responseCookies
         )
         {
-            if (filterGetWay == null) return null;
-            if (filterGetWay is FilterGetWayByString fs)
+            try
             {
-                string param;
-                switch (fs.FilterWay)
+                if (filterGetWay == null) return null;
+                if (filterGetWay is FilterGetWayByString fs)
                 {
-                    case FilterGetWayStringEnum.Url: param = url; break;
-                    case FilterGetWayStringEnum.RequestBody: param = requestBody; break;
-                    case FilterGetWayStringEnum.ResponseBody: param = responseBody; break;
-                    default: goto Error;
+                    string param;
+                    switch (fs.FilterWay)
+                    {
+                        case FilterGetWayStringEnum.Url: param = url; break;
+                        case FilterGetWayStringEnum.RequestBody: param = requestBody; break;
+                        case FilterGetWayStringEnum.ResponseBody: param = responseBody; break;
+                        default: goto Error;
+                    }
+                    return fs.GetFilterFunc(param);
                 }
-                return fs.GetFilterFunc(param);
+                else if (filterGetWay is FilterGetWayByDictionary fd)
+                {
+                    IDictionary<string, string> param;
+                    switch (fd.FilterWay)
+                    {
+                        case FilterGetWayDictionaryEnum.RequestHeaders: param = requestHeaders; break;
+                        case FilterGetWayDictionaryEnum.RequestCookies: param = requestCookies; break;
+                        case FilterGetWayDictionaryEnum.ResponseHeaders: param = responseHeader; break;
+                        case FilterGetWayDictionaryEnum.ResponseCookies: param = responseCookies; break;
+                        default: goto Error;
+                    }
+                    return fd.GetFilterFunc(param);
+                }
             }
-            else if (filterGetWay is FilterGetWayByDictionary fd)
+            catch (Exception ex)
             {
-                IDictionary<string, string> param;
-                switch (fd.FilterWay)
-                {
-                    case FilterGetWayDictionaryEnum.RequestHeaders: param = requestHeaders; break;
-                    case FilterGetWayDictionaryEnum.RequestCookies: param = requestCookies; break;
-                    case FilterGetWayDictionaryEnum.ResponseHeaders: param = responseHeader; break;
-                    case FilterGetWayDictionaryEnum.ResponseCookies: param = responseCookies; break;
-                    default: goto Error;
-                }
-                return fd.GetFilterFunc(param);
+                throw new EasyLogHttpException("获取 RequestCookies 发生异常: " + ex.Message, false, ex);
             }
         Error:
             throw new Exception("没有匹配到过滤方式");
