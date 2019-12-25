@@ -44,6 +44,9 @@ namespace EasyLog.WriteLog
         public void Information(string log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
             => ToLog(LogEventLevel.Information, log, category1, category2, category3, filter1, filter2);
 
+        public void JustInformation(string log)
+            => Logger.Information(log);
+
         /// <summary>
         /// Warning
         /// </summary>

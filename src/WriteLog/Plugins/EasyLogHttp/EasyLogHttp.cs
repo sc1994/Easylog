@@ -67,11 +67,6 @@ namespace EasyLog.WriteLog
                 }
                 finally
                 {
-                    var t = new Dictionary<string, Dictionary<string, string>>
-                    {
-                        {"a",new Dictionary<string, string>{{"b","1"}}}
-                    };
-                    var t2 = new Dictionary<string, object> { { "a", t["a"] } };
                     var template = "easy_log_http({app},{method},{url},{requestHeaders},{requestBody},{requestCookies},{responseHeader},{responseBody},{responseCookies},{filter1},{filter2},{ip},{trace},{ex})";
                     var @params = new object[]
                         {
@@ -79,7 +74,7 @@ namespace EasyLog.WriteLog
                             method,
                             url,
                             requestHeaders,
-                            t2,
+                            requestBody,
                             requestCookies,
                             responseHeader,
                             responseBody,
@@ -171,8 +166,8 @@ namespace EasyLog.WriteLog
         /// </summary>
         private static async Task<string> GetResponseBodyAsync(HttpResponse response, Func<Task> next)
         {
-            var hasNext = true; // 是否需要执行next在异常处理中, 用于在异常捕获之后不影响正常管道执行
-            var nexted = false; // next之后
+            var nexted = false; // next 之后
+            var needNext = true;
             try
             {
                 string responseBody = null;
@@ -183,7 +178,7 @@ namespace EasyLog.WriteLog
                     using (var memStream = new MemoryStream())
                     {
                         response.Body = memStream;
-                        hasNext = false;
+                        needNext = false;
                         await next();
                         nexted = true;
                         memStream.Position = 0;
@@ -198,7 +193,7 @@ namespace EasyLog.WriteLog
                 }
                 else
                 {
-                    hasNext = false;
+                    needNext = false;
                     await next();
                     nexted = true;
                 }
@@ -206,8 +201,8 @@ namespace EasyLog.WriteLog
             }
             catch (Exception ex)
             {
-                if (nexted) // next 执行之后的异常(我的读取body代码异常), 直接抛出
-                    throw new EasyLogHttpException("获取 ResponseBody 发生异常: " + ex.Message, hasNext, ex);
+                if (nexted || needNext) // next 执行之后的异常(我的读取body代码异常), 直接抛出
+                    throw new EasyLogHttpException("获取 ResponseBody 发生异常: " + ex.Message, needNext, ex);
                 throw ex; // 将next中发生的异常向外抛出, 外层捕获并且在日志中呈现
             }
         }

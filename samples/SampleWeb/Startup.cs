@@ -1,11 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using EasyLog.WriteLog;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using SampleWeb.Controllers;
 using SampleWeb.Services;
 using Serilog;
 using Serilog.Events;
@@ -43,7 +44,7 @@ namespace SampleWeb
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app)
+        public void Configure(IApplicationBuilder app, EasyLogger log)
         {
             // 启用 http 日志
             app.UseEasyLogHttp(options =>
@@ -51,8 +52,9 @@ namespace SampleWeb
                 options.RequestOption = new HttpOptionItem
                 {
                     IsHasBody = true,
-                    HasHeaders = new []
+                    HasHeaders = new[]
                     {
+                        "Accept",
                         "Content-Type",
                         "Host",
                         "User-Agent",
@@ -65,7 +67,7 @@ namespace SampleWeb
                 options.ResponseOption = new HttpOptionItem
                 {
                     IsHasBody = true,
-                    HasHeaders = new []
+                    HasHeaders = new[]
                     {
                         "Content-Type",
                         "Server",
@@ -97,6 +99,14 @@ namespace SampleWeb
                         return a[a.Length - 1].Split('?')[0]; // 打底规则, 如果上面的规则没有匹配, 则获取url地址的最后一位
                     }
                 };
+                // options.Blacklist = new FilterGetWayByDictionary
+                // {
+                //     FilterWay = FilterGetWayDictionaryEnum.RequestCookies,
+                //     GetFilterFunc = header =>
+                //     {
+                        
+                //     }
+                // };
             });
 
             app.UseRouting();

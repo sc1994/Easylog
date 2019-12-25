@@ -43,9 +43,8 @@ namespace SampleWeb.Controllers
         }
 
         [HttpPost]
-        public object Post(object request)
+        public object Post(TestRequestJson request)
         {
-            // throw new Exception("asdasds");
             // _log.Information(request);
             return request;
         }
@@ -55,5 +54,10 @@ namespace SampleWeb.Controllers
         {
             return _env.EnvironmentName;
         }
+    }
+
+    public class TestRequestJson
+    {
+        public string A { get; set; }
     }
 }

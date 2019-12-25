@@ -10,14 +10,26 @@ namespace EasyLog.WriteLog
 
         public HttpOptionItem ResponseOption { get; set; }
 
-        public IFilterGetWay Filter1 { get; set; }
+        /// <summary>
+        /// 过滤字段 (在请求或者响应中获取属性值作为过滤条件以供日志搜索和定位)
+        ///     
+        /// /// </summary>
+        public IFilterGetWay Filter1 { get; set; } // TODO 命名还要推敲
 
-        public IFilterGetWay Filter2 { get; set; }
+        public IFilterGetWay Filter2 { get; set; } // TODO 命名还要推敲
+
+        /// <summary>
+        /// 黑名单(满足条件的数据将不会记录)
+        ///     比如:文件下载接口,可能会记录一些无意义的二进制字节
+        ///          开放的日志捕获接口, 防止记录双份日志
+        /// </summary>
+        /// <value></value>
+        public IFilterGetWay Blacklist { get; set; } // TODO 扩展出 bool 委托
     }
 
     public class HttpOptionItem
     {
-        public bool IsHasBody { get; set; }
+        public bool IsHasBody { get; set; } // TODO 不是简单的一句话,而是配置一系列的规则
 
         /// <summary>
         /// [必填]  body size 限制, 防止过大的数据进入日志, 浪费资源
