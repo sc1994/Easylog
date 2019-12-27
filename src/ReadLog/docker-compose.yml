@@ -1,5 +1,0 @@
-readlog:
-  image: readlog
-  restart: always
-  ports:
-    - 6767:80

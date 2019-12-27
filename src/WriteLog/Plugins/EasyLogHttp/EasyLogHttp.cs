@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
+using static Newtonsoft.Json.JsonConvert;
 
 namespace EasyLog.WriteLog
 {
@@ -37,8 +38,8 @@ namespace EasyLog.WriteLog
 
             app.Use(async (context, next) => // 添加管道 , 处理request,response 
             {
-                Exception exception = null;
-                string method = null, url = null, requestBody = null, responseBody = null, f1 = null, f2 = null;
+                string exception = null;
+                string method = null, url = null, requestBody = null, responseBody = null, filter1 = null, filter2 = null;
                 IDictionary<string, string> requestHeaders = null, requestCookies = null, responseHeader = null, responseCookies = null;
                 try
                 {
@@ -49,42 +50,59 @@ namespace EasyLog.WriteLog
                     requestCookies = GetRequestCookies(context.Request); // 请求 cookies
                     responseBody = await GetResponseBodyAsync(context.Response, next);  // 响应 body
                     responseHeader = GetResponseHeaders(context.Response); // 响应 headers (必须在执行 next 之后才有这个内容)
-                                                                           // TODO 响应 cookies  响应cookies类型有问题
-                    f1 = GetFilter(easyLog.Filter1, url, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, null); // TODO: response cookies
-                    f2 = GetFilter(easyLog.Filter2, url, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, null); // TODO: response cookies
+                    responseCookies = GetResponseCookies(context.Response); // TODO 响应 cookies  响应cookies类型有问题
+                    filter1 = GetFilter(easyLog.Filter1, url, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, null); // TODO response cookies
+                    filter2 = GetFilter(easyLog.Filter2, url, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, null); // TODO response cookies
                 }
                 catch (EasyLogHttpException ex)
                 {
-                    exception = ex;
+                    exception = ex.ToString();
                     if (ex.HasNext)
                         await next();
                 }
                 catch (Exception ex)
                 {
-                    // TODO 异常记录和异常抛出 , 目前整体抛出可能需要优化异常细节
-                    exception = ex;
+                    exception = ex.ToString();
                     throw;
                 }
                 finally
                 {
-                    var template = "easy_log_http({app},{method},{url},{requestHeaders},{requestBody},{requestCookies},{responseHeader},{responseBody},{responseCookies},{filter1},{filter2},{ip},{trace},{ex})";
+                    var template = "<{ip}> <{environment}> <{app}> <{method}> <{url}> <{trace}>";
+                    if (requestHeaders?.Any() == true) template += "\r\nRequestHeaders : <{requestHeaders}>";
+                    if (!string.IsNullOrWhiteSpace(requestBody)) template += "\r\nRequestBody    : <{requestBody}>";
+                    if (requestCookies?.Any() == true) template += "\r\nRequestCookies : <{requestCookies}>";
+                    if (responseHeader?.Any() == true) template += "\r\nResponseHeader : <{responseHeader}>";
+                    if (!string.IsNullOrWhiteSpace(responseBody)) template += "\r\nResponseBody   : <{responseBody}>";
+                    if (responseCookies?.Any() == true) template += "\r\nResponseCookies: <{responseCookies}>";
+                    if (!string.IsNullOrWhiteSpace(filter1)) template += "\r\nFilter1        : <{filter1}>";
+                    if (!string.IsNullOrWhiteSpace(filter2)) template += "\r\nFilter2        : <{filter2}>";
+                    if (!string.IsNullOrWhiteSpace(exception)) template += "\r\nException      : <{exception}>";
+                    template = template.TrimEnd(',');
                     var @params = new object[]
                         {
+                            Stores.Ip,
+                            Stores.EnvironmentName,
                             EasyLogStart.App,
                             method,
                             url,
+                            Stores.GetTrace(context),
                             requestHeaders,
                             requestBody,
                             requestCookies,
                             responseHeader,
                             responseBody,
-                            null, // responseCookies
-                            f1,
-                            f2,
-                            Stores.Ip,
-                            Stores.GetTrace(context),
+                            responseCookies,
+                            filter1,
+                            filter2,
                             exception
-                        };
+                        }.Where(x =>
+                        {
+                            if (x is string s)
+                                return !string.IsNullOrWhiteSpace(s);
+                            else if (x is IDictionary<string, string> d)
+                                return d?.Any() == true;
+                            return false;
+                        }).ToArray();
 
                     if (exception == null)
                         EasyLogStart.Logger.Information(template, @params);
@@ -224,11 +242,13 @@ namespace EasyLog.WriteLog
             }
         }
 
-        private static IDictionary<string, string> GetResponseCookies(HttpResponse request, HttpOption option)
+        private static IDictionary<string, string> GetResponseCookies(HttpResponse response)
         {
             try
             {
-                throw new NotImplementedException();
+                if (ResponseOption?.IsHasCookies == true)
+                    return DeserializeObject<IDictionary<string, string>>(SerializeObject(response.Cookies));
+                return null;
             }
             catch (Exception ex)
             {

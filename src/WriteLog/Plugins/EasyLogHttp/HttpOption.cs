@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace EasyLog.WriteLog
 {
     public class HttpOption
@@ -20,11 +18,18 @@ namespace EasyLog.WriteLog
 
         /// <summary>
         /// 黑名单(满足条件的数据将不会记录)
-        ///     比如:文件下载接口,可能会记录一些无意义的二进制字节
-        ///          开放的日志捕获接口, 防止记录双份日志
+        ///     比如: 1. 文件下载接口,可能会记录一些无意义的二进制字节
+        ///           2. 开放的日志捕获接口, 防止记录双份日志
         /// </summary>
         /// <value></value>
         public IFilterGetWay Blacklist { get; set; } // TODO 扩展出 bool 委托
+
+        /// <summary>
+        /// 白名单 (只有满足条件的http才会被记录)
+        ///     比如: 1. 重要的数据插入接口, 方便在数据插入失败后补数据.
+        /// </summary>
+        /// <value></value>
+        public IFilterGetWay Whitelist { get; set; }
     }
 
     public class HttpOptionItem

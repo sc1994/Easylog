@@ -8,17 +8,28 @@ using Microsoft.Extensions.Hosting;
 
 namespace EasyLog.WriteLog
 {
+    /// <summary>
+    /// easy log 
+    /// </summary>
     public class EasyLogger
     {
         private readonly string _trace;
         private readonly string _env;
 
+        /// <summary>
+        /// 创建不包含追踪值和环境值的日志记录对象
+        /// </summary>
         public EasyLogger() { }
 
+        /// <summary>
+        /// 创建完全的日志记录对象
+        /// </summary>
+        /// <param name="httpAccessor"></param>
+        /// <param name="env"></param>
         public EasyLogger(IHttpContextAccessor httpAccessor, IHostEnvironment env)
         {
             _trace = Stores.GetTrace(httpAccessor.HttpContext);
-            _env = Stores.GetEnvironment(httpAccessor.HttpContext, env);
+            _env = Stores.EnvironmentName = env.EnvironmentName;
         }
         /// <summary>
         /// Debug
@@ -43,9 +54,6 @@ namespace EasyLog.WriteLog
         /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         public void Information(string log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
             => ToLog(LogEventLevel.Information, log, category1, category2, category3, filter1, filter2);
-
-        public void JustInformation(string log)
-            => Logger.Information(log);
 
         /// <summary>
         /// Warning
@@ -106,7 +114,6 @@ namespace EasyLog.WriteLog
         /// <param name="category3">分类3 (默认方法名)</param>
         /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
         /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
-        /// <param name="exception">异常</param>
         public void Warning(object log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
             => Warning(SerializeObject(log), category1, category2, category3, filter1, filter2);
 
@@ -123,13 +130,15 @@ namespace EasyLog.WriteLog
         public void Error(object log, Exception exception, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
             => Error(SerializeObject(log), exception, category1, category2, category3, filter1, filter2);
 
+
         private void ToLog(LogEventLevel level, string log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null, Exception exception = null)
         {
             string[] calls = null;
             if (category1 == null && category2 == null && category3 == null)
             {
                 (category1, category2, category3, calls) = GetDefaultClassify(Environment.StackTrace);
-            }
+            } // TODO 需要细分获取内容, 减少堆栈分析次数, 应所见即所得(传入和非传入一一对应,不影响其他参数的获取)
+            var tempLate = "{ip} {app} {category1} {category2} {category3} {trace} {filter1} {filter2} {log} {calls} {environment} {exception})";
             var @params = new object[]
             {
                 App,
@@ -148,20 +157,20 @@ namespace EasyLog.WriteLog
             switch (level)
             {
                 case LogEventLevel.Debug:
-                    EasyLogStart.Logger.Debug(Stores.MessageTemp, @params); return;
+                    EasyLogStart.Logger.Debug(tempLate, @params); return;
                 case LogEventLevel.Information:
-                    EasyLogStart.Logger.Information(Stores.MessageTemp, @params); return;
+                    EasyLogStart.Logger.Information(tempLate, @params); return;
                 case LogEventLevel.Warning:
-                    EasyLogStart.Logger.Warning(Stores.MessageTemp, @params); return;
+                    EasyLogStart.Logger.Warning(tempLate, @params); return;
                 case LogEventLevel.Error:
-                    EasyLogStart.Logger.Error(Stores.MessageTemp, @params); return;
+                    EasyLogStart.Logger.Error(tempLate, @params); return;
             }
         }
+
 
         private (string category1, string category2, string category3, string[] calls) GetDefaultClassify(string stackTrace)
         {
             string[] split = new[] { "at ", "在 ", " in ", " 位置 ", ".cs:line", ".cs:行号" };
-            // stackTrace.WriteLine("获取堆栈"); TODO:调试时查看
             try
             {
                 var ats = GetStackTraceFileAddress(stackTrace).Select(x => x.Trim()).ToArray();

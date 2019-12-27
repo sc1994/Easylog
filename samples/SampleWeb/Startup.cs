@@ -4,6 +4,7 @@ using EasyLog.WriteLog;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using SampleWeb.Controllers;
@@ -44,7 +45,7 @@ namespace SampleWeb
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, EasyLogger log)
+        public void Configure(IApplicationBuilder app, EasyLogger log, IHostEnvironment env)
         {
             // 启用 http 日志
             app.UseEasyLogHttp(options =>
@@ -57,7 +58,7 @@ namespace SampleWeb
                         "Accept",
                         "Content-Type",
                         "Host",
-                        "User-Agent",
+                        // "User-Agent",
                         "Origin",
                         "Content-Length"
                     },
@@ -84,27 +85,27 @@ namespace SampleWeb
                         //     return v;
                         // return null;
                         // 建议在配置获取过滤规则的时候, 尽量做一些容错判定, 虽然内部代码会去兼容异常, 但是过于频繁的异常捕获是会消耗一定性能的
-                        return headers.FirstOrDefault(x => x.Key == "Content-Type").Value;
+                        return headers.FirstOrDefault(x => x.Key.ToLower() == "user-token").Value;
                     }
                 };
-                options.Filter2 = new FilterGetWayByString
-                {
-                    FilterWay = FilterGetWayStringEnum.Url,
-                    GetFilterFunc = url =>
-                    {
-                        var a = url.Split(new[] { "?id=" }, StringSplitOptions.RemoveEmptyEntries);
-                        if (a.Length == 2) return a[1].Split('&')[0]; // 获取url的params为id的值
+                // options.Filter2 = new FilterGetWayByString
+                // {
+                //     FilterWay = FilterGetWayStringEnum.Url,
+                //     GetFilterFunc = url =>
+                //     {
+                //         var a = url.Split(new[] { "?id=" }, StringSplitOptions.RemoveEmptyEntries);
+                //         if (a.Length == 2) return a[1].Split('&')[0]; // 获取url的params为id的值
 
-                        a = url.Split('/');
-                        return a[a.Length - 1].Split('?')[0]; // 打底规则, 如果上面的规则没有匹配, 则获取url地址的最后一位
-                    }
-                };
+                //         a = url.Split('/');
+                //         return a[a.Length - 1].Split('?')[0]; // 打底规则, 如果上面的规则没有匹配, 则获取url地址的最后一位
+                //     }
+                // };
                 // options.Blacklist = new FilterGetWayByDictionary
                 // {
                 //     FilterWay = FilterGetWayDictionaryEnum.RequestCookies,
                 //     GetFilterFunc = header =>
                 //     {
-                        
+
                 //     }
                 // };
             });

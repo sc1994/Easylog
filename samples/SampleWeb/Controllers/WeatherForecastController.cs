@@ -31,7 +31,7 @@ namespace SampleWeb.Controllers
         public IEnumerable<WeatherForecast> Get()
         {
             // _service.Log();
-            // _log.Information("just information", filter1: "testF1");
+            _log.Information("just information", filter1: "testF1");
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
             {
@@ -46,6 +46,7 @@ namespace SampleWeb.Controllers
         public object Post(TestRequestJson request)
         {
             // _log.Information(request);
+            HttpContext.Response.Cookies.Append("aaa", "123");
             return request;
         }
 
