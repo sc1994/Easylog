@@ -68,15 +68,15 @@ namespace EasyLog.WriteLog
                 finally
                 {
                     var template = "<{ip}> <{environment}> <{app}> <{method}> <{url}> <{trace}>";
-                    if (requestHeaders?.Any() == true) template += "\r\nRequestHeaders : <{requestHeaders}>";
-                    if (!string.IsNullOrWhiteSpace(requestBody)) template += "\r\nRequestBody    : <{requestBody}>";
-                    if (requestCookies?.Any() == true) template += "\r\nRequestCookies : <{requestCookies}>";
-                    if (responseHeader?.Any() == true) template += "\r\nResponseHeader : <{responseHeader}>";
-                    if (!string.IsNullOrWhiteSpace(responseBody)) template += "\r\nResponseBody   : <{responseBody}>";
-                    if (responseCookies?.Any() == true) template += "\r\nResponseCookies: <{responseCookies}>";
-                    if (!string.IsNullOrWhiteSpace(filter1)) template += "\r\nFilter1        : <{filter1}>";
-                    if (!string.IsNullOrWhiteSpace(filter2)) template += "\r\nFilter2        : <{filter2}>";
-                    if (!string.IsNullOrWhiteSpace(exception)) template += "\r\nException      : <{exception}>";
+                    if (requestHeaders?.Any() == true) template += "\r\nRequestHeaders : {requestHeaders}";
+                    if (!string.IsNullOrWhiteSpace(requestBody)) template += "\r\nRequestBody    : {requestBody}";
+                    if (requestCookies?.Any() == true) template += "\r\nRequestCookies : {requestCookies}";
+                    if (responseHeader?.Any() == true) template += "\r\nResponseHeader : {responseHeader}";
+                    if (!string.IsNullOrWhiteSpace(responseBody)) template += "\r\nResponseBody   : {responseBody}";
+                    if (responseCookies?.Any() == true) template += "\r\nResponseCookies: {responseCookies}";
+                    if (!string.IsNullOrWhiteSpace(filter1)) template += "\r\nFilter1        : {filter1}";
+                    if (!string.IsNullOrWhiteSpace(filter2)) template += "\r\nFilter2        : {filter2}";
+                    if (!string.IsNullOrWhiteSpace(exception)) template += "\r\nException      : {exception}";
                     template = template.TrimEnd(',');
                     var @params = new object[]
                         {
