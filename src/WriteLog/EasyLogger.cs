@@ -138,7 +138,21 @@ namespace EasyLog.WriteLog
             {
                 (category1, category2, category3, calls) = GetDefaultClassify(Environment.StackTrace);
             } // TODO 需要细分获取内容, 减少堆栈分析次数, 应所见即所得(传入和非传入一一对应,不影响其他参数的获取)
-            var tempLate = "{ip} {app} {category1} {category2} {category3} {trace} {filter1} {filter2} {log} {calls} {environment} {exception})";
+              // 
+              // <{filter1}> <{filter2}>
+
+            var ex = exception.ToString();
+            var tempLate = "<{ip}> <{environment}> <{app}> <{category1}> <{category2}> <{category3}> <{trace}>";
+            tempLate += "\r\n  log       : <{log}>";
+            if (!string.IsNullOrWhiteSpace(filter1))
+                tempLate += "\r\n  filter1   : <{filter1}>";
+            if (!string.IsNullOrWhiteSpace(filter1))
+                tempLate += "\r\n  filter2   : <{filter2}>";
+            if (calls?.Any() == true)
+                tempLate += "\r\n  calls     : <{calls}>";
+            if (!string.IsNullOrWhiteSpace(ex))
+                tempLate += "\r\n  exception : <{exception}>";
+
             var @params = new object[]
             {
                 App,
@@ -152,8 +166,14 @@ namespace EasyLog.WriteLog
                 _trace,
                 calls,
                 _env,
-                exception?.ToString()
-            };
+                ex
+            }
+            .Where(x =>
+            {
+                if (x is string s && !string.IsNullOrWhiteSpace(s)) return true;
+                if (x is string[] a && a?.Any() == true) return true;
+                return false;
+            }).ToArray();
             switch (level)
             {
                 case LogEventLevel.Debug:
@@ -201,7 +221,7 @@ namespace EasyLog.WriteLog
             }
             catch (Exception exception)
             {
-                Error("解析堆栈获取分类信息失败:" + stackTrace, exception);
+                Error("解析堆栈获取分类信息失败:" + stackTrace, exception, "WriteLog", "EasyLogger", "GetDefaultClassify");
                 goto ReturnDefault;
             }
 

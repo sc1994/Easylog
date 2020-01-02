@@ -44,17 +44,17 @@ export default {
           return {
             timestamp:
               t.toLocaleDateString() + " " + t.toTimeString().split(" ")[0],
-            level: x._source.level.substring(0, 3).toUpperCase()
-            // title: x._source.message.split("\r\n")[0].replace(/"/g, ""), TODO:拆分字段赋值
-            // lines: x._source.message
-            //   .split("\r\n")
-            //   .slice(1)
-            //   .map(x =>
-            //     x
-            //       .replace(/\\\"/g, '"')
-            //       .replace(/"{/g, "{")
-            //       .replace(/"}/g, "}")
-            //   )
+            level: x._source.level.substring(0, 3).toUpperCase(),
+            title: x._source.message.split("\r\n")[0].replace(/"/g, ""), // TODO:拆分字段赋值
+            lines: x._source.message
+              .split("\r\n")
+              .slice(1)
+              .map(x =>
+                x
+                  .replace(/\\\"/g, '"')
+                  .replace(/"{/g, "{")
+                  .replace(/"}/g, "}")
+              )
           };
         })
       ];
