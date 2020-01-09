@@ -302,8 +302,7 @@ namespace EasyLog.WriteLog
                 }
                 else if (filterGetWay is FilterGetWayByQueryString qs)
                 {
-                    var queryStringModel = System.Web.HttpUtility.ParseQueryString(queryString);
-                    var b = queryString["aa"];
+                    
                 }
             }
             catch (Exception ex)
