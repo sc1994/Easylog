@@ -35,103 +35,103 @@ namespace EasyLog.WriteLog
         /// Debug
         /// </summary>
         /// <param name="log">日志内容</param>
+        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
+        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="category1">分类1 (默认方法所在的文件夹名称)</param>
         /// <param name="category2">分类2 (默认方法所在的.cs文件名)</param>
         /// <param name="category3">分类3 (默认方法名)</param>
-        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
-        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
-        public void Debug(string log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
-            => ToLog(LogEventLevel.Debug, log, category1, category2, category3, filter1, filter2);
+        public void Debug(string log, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null)
+            => ToLog(LogEventLevel.Debug, log, filter1, filter2, category1, category2, category3);
 
         /// <summary>
         /// Information
         /// </summary>
         /// <param name="log">日志内容</param>
+        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
+        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="category1">分类1 (默认方法所在的文件夹名称)</param>
         /// <param name="category2">分类2 (默认方法所在的.cs文件名)</param>
         /// <param name="category3">分类3 (默认方法名)</param>
-        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
-        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
-        public void Information(string log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
-            => ToLog(LogEventLevel.Information, log, category1, category2, category3, filter1, filter2);
+        public void Information(string log, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null)
+            => ToLog(LogEventLevel.Information, log, filter1, filter2, category1, category2, category3);
 
         /// <summary>
         /// Warning
         /// </summary>
         /// <param name="log">日志内容</param>
+        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
+        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="category1">分类1 (默认方法所在的文件夹名称)</param>
         /// <param name="category2">分类2 (默认方法所在的.cs文件名)</param>
         /// <param name="category3">分类3 (默认方法名)</param>
-        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
-        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="exception">异常</param>
-        public void Warning(string log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null, Exception exception = null)
-            => ToLog(LogEventLevel.Warning, log, category1, category2, category3, filter1, filter2, exception);
+        public void Warning(string log, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null, Exception exception = null)
+            => ToLog(LogEventLevel.Warning, log, filter1, filter2, category1, category2, category3, exception);
 
         /// <summary>
         /// Error
         /// </summary>
         /// <param name="log">日志内容</param>
         /// <param name="exception">异常</param>
+        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
+        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="category1">分类1 (默认方法所在的文件夹名称)</param>
         /// <param name="category2">分类2 (默认方法所在的.cs文件名)</param>
         /// <param name="category3">分类3 (默认方法名)</param>
-        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
-        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
-        public void Error(string log, Exception exception, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
-            => ToLog(LogEventLevel.Error, log, category1, category2, category3, filter1, filter2, exception);
+        public void Error(string log, Exception exception, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null)
+            => ToLog(LogEventLevel.Error, log, filter1, filter2, category1, category2, category3, exception);
 
         /// <summary>
         /// Debug
         /// </summary>
         /// <param name="log">日志内容</param>
+        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
+        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="category1">分类1 (默认方法所在的文件夹名称)</param>
         /// <param name="category2">分类2 (默认方法所在的.cs文件名)</param>
         /// <param name="category3">分类3 (默认方法名)</param>
-        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
-        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
-        public void Debug(object log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
-            => Debug(SerializeObject(log), category1, category2, category3, filter1, filter2);
+        public void Debug(object log, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null)
+            => Debug(SerializeObject(log), filter1, filter2, category1, category2, category3);
 
         /// <summary>
         /// Information
         /// </summary>
         /// <param name="log">日志内容</param>
+        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
+        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="category1">分类1 (默认方法所在的文件夹名称)</param>
         /// <param name="category2">分类2 (默认方法所在的.cs文件名)</param>
         /// <param name="category3">分类3 (默认方法名)</param>
-        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
-        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
-        public void Information(object log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
-            => Information(SerializeObject(log), category1, category2, category3, filter1, filter2);
+        public void Information(object log, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null)
+            => Information(SerializeObject(log), filter1, filter2, category1, category2, category3);
 
         /// <summary>
         /// Warning
         /// </summary>
         /// <param name="log">日志内容</param>
+        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
+        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="category1">分类1 (默认方法所在的文件夹名称)</param>
         /// <param name="category2">分类2 (默认方法所在的.cs文件名)</param>
         /// <param name="category3">分类3 (默认方法名)</param>
-        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
-        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
-        public void Warning(object log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
-            => Warning(SerializeObject(log), category1, category2, category3, filter1, filter2);
+        public void Warning(object log, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null)
+            => Warning(SerializeObject(log), filter1, filter2, category1, category2, category3);
 
         /// <summary>
         /// Error
         /// </summary>
         /// <param name="log">日志内容</param>
         /// <param name="exception">异常</param>
+        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
+        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
         /// <param name="category1">分类1 (默认方法所在的文件夹名称)</param>
         /// <param name="category2">分类2 (默认方法所在的.cs文件名)</param>
         /// <param name="category3">分类3 (默认方法名)</param>
-        /// <param name="filter1">过滤1 用于精确定位日志 (比如可以是当前登录人员的id)</param>
-        /// <param name="filter2">过滤2 (过滤1的扩展字段)</param>
-        public void Error(object log, Exception exception, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null)
-            => Error(SerializeObject(log), exception, category1, category2, category3, filter1, filter2);
+        public void Error(object log, Exception exception, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null)
+            => Error(SerializeObject(log), exception, filter1, filter2, category1, category2, category3);
 
 
-        private void ToLog(LogEventLevel level, string log, string category1 = null, string category2 = null, string category3 = null, string filter1 = null, string filter2 = null, Exception exception = null)
+        private void ToLog(LogEventLevel level, string log, string filter1 = null, string filter2 = null, string category1 = null, string category2 = null, string category3 = null, Exception exception = null)
         {
             string[] calls = null;
             if (category1 == null && category2 == null && category3 == null)
@@ -221,7 +221,7 @@ namespace EasyLog.WriteLog
             }
             catch (Exception exception)
             {
-                Error("解析堆栈获取分类信息失败:" + stackTrace, exception, "WriteLog", "EasyLogger", "GetDefaultClassify");
+                Error("解析堆栈获取分类信息失败:" + stackTrace, exception, category1: "WriteLog", category2: "EasyLogger", category3: "GetDefaultClassify");
                 goto ReturnDefault;
             }
 

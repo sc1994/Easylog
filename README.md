@@ -27,8 +27,11 @@ $"{app},{category1},{category2},{category3},{log},{filter1},{filter2},{ip},{trac
 > 基础功能  (开发中)
 
 [√] 写入日志  
-[×] 读取日志  
-[×] 日志追踪
+[√] 日志追踪
+
+[×] http api 日志
+
+[×] 查询(搜索)日志  
 
 ## 启用日志
 
