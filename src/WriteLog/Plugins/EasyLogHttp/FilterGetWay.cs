@@ -1,21 +1,24 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace EasyLog.WriteLog
 {
-    public interface IFilterGetWay
+    public abstract class IFilterGetWay
     {
 
     }
 
     public class FilterGetWayByString : IFilterGetWay
     {
-        /// <summary>
-        /// 过滤方式 
-        /// </summary>
         public FilterGetWayStringEnum FilterWay { get; set; }
 
         public Func<string, string> GetFilterFunc { get; set; }
+    }
+
+    public class FilterGetWayByQueryString : IFilterGetWay
+    {
+        public Func<QueryString, string> GetFilterFunc { get; set; }
     }
 
     public class FilterGetWayByDictionary : IFilterGetWay

@@ -39,20 +39,22 @@ namespace EasyLog.WriteLog
             app.Use(async (context, next) => // 添加管道 , 处理request,response 
             {
                 string exception = null;
-                string method = null, url = null, requestBody = null, responseBody = null, filter1 = null, filter2 = null;
+                string method = null, host = null, route = null, queryString = null, requestBody = null, responseBody = null, filter1 = null, filter2 = null;
                 IDictionary<string, string> requestHeaders = null, requestCookies = null, responseHeader = null, responseCookies = null;
                 try
                 {
                     method = context.Request.Method;
-                    url = GetUrl(context.Request); // 拼接请求 url
+                    host = GetHost(context.Request);
+                    route = context.Request.Path.Value;
+                    queryString = context.Request.QueryString.Value;
                     requestHeaders = GetRequestHeaders(context.Request); // 请求 headers
                     requestBody = await GetRequestBodyAsync(context.Request); // 请求 body
                     requestCookies = GetRequestCookies(context.Request); // 请求 cookies
                     responseBody = await GetResponseBodyAsync(context.Response, next);  // 响应 body
                     responseHeader = GetResponseHeaders(context.Response); // 响应 headers (必须在执行 next 之后才有这个内容)
                     responseCookies = GetResponseCookies(context.Response); // TODO 响应 cookies  响应cookies类型有问题
-                    filter1 = GetFilter(easyLog.Filter1, url, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, null); // TODO response cookies
-                    filter2 = GetFilter(easyLog.Filter2, url, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, null); // TODO response cookies
+                    filter1 = GetFilter(easyLog.Filter1, route, queryString, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, responseCookies);
+                    filter2 = GetFilter(easyLog.Filter2, route, queryString, requestHeaders, requestBody, requestCookies, responseHeader, responseBody, responseCookies);
                 }
                 catch (EasyLogHttpException ex)
                 {
@@ -67,7 +69,8 @@ namespace EasyLog.WriteLog
                 }
                 finally
                 {
-                    var template = "<{ip}> <{environment}> <{app}> <{method}> <{url}> <{trace}>";
+                    var template = "<{ip}> <{environment}> <{app}> <{method}> <{route}> <{host}> <{trace}>";
+                    if (!string.IsNullOrWhiteSpace(queryString)) template += "\r\n   QueryString    : {queryString}";
                     if (requestHeaders?.Any() == true) template += "\r\n  RequestHeaders : {requestHeaders}";
                     if (!string.IsNullOrWhiteSpace(requestBody)) template += "\r\n  RequestBody    : {requestBody}";
                     if (requestCookies?.Any() == true) template += "\r\n  RequestCookies : {requestCookies}";
@@ -84,8 +87,10 @@ namespace EasyLog.WriteLog
                             Stores.EnvironmentName,
                             EasyLogStart.App,
                             method,
-                            url,
+                            route,
+                            host,
                             Stores.GetTrace(context),
+                            queryString,
                             requestHeaders,
                             requestBody,
                             requestCookies,
@@ -112,9 +117,8 @@ namespace EasyLog.WriteLog
             });
         }
 
-
-        private static string GetUrl(HttpRequest request)
-            => request.Scheme + "://" + request.Host + request.Path.Value + request.QueryString.Value;
+        private static string GetHost(HttpRequest request)
+            => request.Scheme + "://" + request.Host;
 
         private static IDictionary<string, string> GetRequestHeaders(HttpRequest request)
         {
@@ -259,6 +263,7 @@ namespace EasyLog.WriteLog
         private static string GetFilter(
             IFilterGetWay filterGetWay,
             string url,
+            string queryString,
             IDictionary<string, string> requestHeaders,
             string requestBody,
             IDictionary<string, string> requestCookies,
@@ -294,6 +299,11 @@ namespace EasyLog.WriteLog
                         default: goto Error;
                     }
                     return fd.GetFilterFunc(param);
+                }
+                else if (filterGetWay is FilterGetWayByQueryString qs)
+                {
+                    var queryStringModel = System.Web.HttpUtility.ParseQueryString(queryString);
+                    var b = queryString["aa"];
                 }
             }
             catch (Exception ex)

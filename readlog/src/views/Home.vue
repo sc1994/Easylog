@@ -1,25 +1,58 @@
 <template>
   <div class="div-console">
-    <div v-for="(item, i) in list" :key="i">
+    <br />
+    <div
+      v-for="(item, i) in list"
+      :key="i"
+      style="cursor: pointer;"
+      @click="message = item.message;dialogVisible = true;"
+    >
       <div class="div-more-text">
         <span class="div-time">{{item.timestamp}}</span>
         <el-divider direction="vertical"></el-divider>
         <span :class="'div-level '+ item.level">{{item.level}}</span>
         <el-divider direction="vertical"></el-divider>
-        <span>{{item.title}}</span>
+        <span :title="item.title">{{item.title}}</span>
+        <div class="div-more-text" v-if="item.exception">Exception: {{item.exception}}</div>
+        <div
+          class="div-more-text"
+          v-if="item.requestHeaders"
+        >RequestHeaders: {{item.requestHeaders}}</div>
+        <div class="div-more-text" v-if="item.requestBody">RequestBody: {{item.requestBody}}</div>
+        <div
+          class="div-more-text"
+          v-if="item.requestCookies"
+        >RequestCookies: {{item.requestCookies}}</div>
+        <div
+          class="div-more-text"
+          v-if="item.responseHeader"
+        >responseHeader: {{item.responseHeader}}</div>
+        <div class="div-more-text" v-if="item.responseBody">responseBody: {{item.responseBody}}</div>
+        <div
+          class="div-more-text"
+          v-if="item.responseCookies"
+        >ResponseCookies: {{item.responseCookies}}</div>
+        <div class="div-more-text" v-if="item.filter1">Filter1: {{item.filter1}}</div>
+        <div class="div-more-text" v-if="item.filter2">Filter2: {{item.filter2}}</div>
       </div>
-      <div v-for="(line,li) in item.lines" :key="li" class="div-more-text div-tab">{{line}}</div>
       <br />
     </div>
+    <el-dialog :visible.sync="dialogVisible" width="80%" :show-close="false" :destroy-on-close="true">
+      <div style="white-space:pre;">{{message}}</div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
+import dateFormat from "dateformat";
+
 export default {
   name: "home",
   data() {
     return {
-      list: []
+      list: [],
+      dialogVisible: false,
+      message: ""
     };
   },
   methods: {
@@ -42,19 +75,20 @@ export default {
         ...list.data.hits.hits.map(x => {
           var t = new Date(x._source["@timestamp"]);
           return {
-            timestamp:
-              t.toLocaleDateString() + " " + t.toTimeString().split(" ")[0],
+            message: x._source.message,
+            timestamp: dateFormat("yyyy-mm-dd HH:MM:ss"),
             level: x._source.level.substring(0, 3).toUpperCase(),
-            title: x._source.message.split("\r\n")[0].replace(/"/g, ""), // TODO:拆分字段赋值
-            lines: x._source.message
-              .split("\r\n")
-              .slice(1)
-              .map(x =>
-                x
-                  .replace(/\\\"/g, '"')
-                  .replace(/"{/g, "{")
-                  .replace(/"}/g, "}")
-              )
+            title: `<${x._source.fields.ip}> <${x._source.fields.environment}> <${x._source.fields.app}> <${x._source.fields.method}> <${x._source.fields.url}> <${x._source.fields.trace}>`,
+            requestHeaders: x._source.fields.requestHeaders,
+            exception: x._source.fields.exception,
+            requestHeaders: x._source.fields.requestHeaders,
+            requestBody: x._source.fields.requestBody,
+            requestCookies: x._source.fields.requestCookies,
+            responseHeader: x._source.fields.responseHeader,
+            responseBody: x._source.fields.responseBody,
+            responseCookies: x._source.fields.responseCookies,
+            filter1: x._source.fields.filter1,
+            filter2: x._source.fields.filter2
           };
         })
       ];
@@ -68,27 +102,10 @@ export default {
 </script>
 
 <style>
-/* 滚动槽 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.06);
-  -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.08);
-}
-/* 滚动条滑块 */
-::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.12);
-  -webkit-box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
 .div-console {
   background-color: #303133;
-  padding: 10px 20px;
   color: #fff;
+  padding: 0px 10px;
   min-height: 94vh;
   max-height: 94vh;
   font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono,
@@ -125,7 +142,7 @@ export default {
 .div-more-text {
   text-overflow: ellipsis;
   overflow: hidden;
-  white-space: pre;
+  white-space: nowrap;
 }
 
 .div-tab {
