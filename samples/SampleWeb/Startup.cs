@@ -138,6 +138,7 @@ namespace SampleWeb
                         .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://localhost:9222/"))
                         {
                             AutoRegisterTemplate = true,
+                            
                             MinimumLogEventLevel = LogEventLevel.Debug
                         })
                         .CreateLogger();
