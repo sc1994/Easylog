@@ -1,4 +1,5 @@
 ﻿using System;
+using Easylog;
 using Microsoft.AspNetCore.Http;
 using Serilog;
 using Serilog.Core;
@@ -13,12 +14,13 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static void AddEasylogger(this IServiceCollection service)
         {
-            service.AddTransient<IHttpContextAccessor>(); // 添加http上下文
+            service.AddHttpContextAccessor(); // 添加http上下文
 
             var serilog = CreateLogger();
 
             service.AddSingleton(serilog); // 添加日志单例
 
+            service.AddTransient<IEasylogger, Easylogger>();
         }
 
         public static Logger CreateLogger() // TODO: 设置补全

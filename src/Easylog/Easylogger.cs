@@ -81,7 +81,7 @@ namespace Easylog
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            // TODO
         }
     }
 }
