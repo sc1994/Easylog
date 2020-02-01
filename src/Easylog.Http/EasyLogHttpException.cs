@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Microsoft.AspNetCore.Builder
+namespace Easylog.Http
 {
     internal class EasyLogHttpException : Exception
     {

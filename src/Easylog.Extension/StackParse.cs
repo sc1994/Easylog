@@ -21,7 +21,7 @@ namespace Easylog.Extension
                     return parse2;
 
                 var fileLines = GetStackFileLines(stack);
-                if (fileLines.Length < 1) goto Default;
+                if (fileLines.Length < 1) return _defaultParse;
 
                 var cs = new string[3];
                 var item = fileLines[0];
@@ -43,15 +43,14 @@ namespace Easylog.Extension
 
                 var r = new StackParseResult
                 {
-                    C1 = cs[0] ?? "DEF",
-                    C2 = cs[1] ?? "DEF",
-                    C3 = cs[2] ?? "DEF",
+                    C1 = cs[0],
+                    C2 = cs[1],
+                    C3 = cs[2],
                     Calls = allCalls
                 };
                 _stackStore.TryAdd(stack, r);
+                return r;
             }
-
-            Default: return _defaultParse;
         }
 
         /// <summary>
@@ -64,7 +63,7 @@ namespace Easylog.Extension
                                     x => (x.Contains("  at") || x.Contains("  在"))
                                     && (x.Contains(" in ") || x.Contains(" 位置 "))
                                     && (x.Contains(".cs:line ") || x.Contains(".cs:行号 "))
-                                    && !x.Contains(@"\EasyLog\"))
+                                    && !x.Contains(@"\Easylogger.cs"))
                                 .Select(x => x.Trim());
             return ats.ToArray();
         }
@@ -79,9 +78,9 @@ namespace Easylog.Extension
 
         internal class StackParseResult
         {
-            public string C1 { get; set; } = "Default";
-            public string C2 { get; set; } = "Default";
-            public string C3 { get; set; } = "Default";
+            public string C1 { get; set; }
+            public string C2 { get; set; }
+            public string C3 { get; set; }
             public string[] Calls { get; set; } = null;
         }
     }

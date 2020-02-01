@@ -3,7 +3,7 @@ using System.Net.Sockets;
 
 namespace Easylog.Extension
 {
-    internal static class NetworkHelper
+    public static class NetworkHelper
     {
         private static string _ip;
 

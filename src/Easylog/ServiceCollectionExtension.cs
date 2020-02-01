@@ -28,7 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return new LoggerConfiguration()
                 .WriteTo.ColoredConsole()
                 .WriteTo.File("logs/easylog.log", rollingInterval: RollingInterval.Day)
-                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://localhost:9222/"))
+                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://10.101.72.5:9222/"))
                 {
 
                 })

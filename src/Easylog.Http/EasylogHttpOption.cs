@@ -7,6 +7,8 @@ namespace Easylog.Http
     {
         public EasylogHttpOptionItem RequestOption { get; set; }
         public EasylogHttpOptionItem ResponseOption { get; set; }
+        public GetFilterField Filter1 { get; set; }
+        public GetFilterField Filter2 { get; set; }
     }
 
     public class EasylogHttpOptionItem

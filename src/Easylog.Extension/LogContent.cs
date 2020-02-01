@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 
 namespace Easylog.Extension
 {
@@ -29,19 +30,19 @@ namespace Easylog.Extension
             var logStr = SerializerAdapter.Object(log);
 
             var tempLate = new StringBuilder("<{ip}> <{environment}> <{app}> <{trace}>\r\n");
-            tempLate.AppendLine("        log: {log}");
+            tempLate.AppendLine(" log_body: {log}");
             if (!string.IsNullOrWhiteSpace(f1))
-                tempLate.AppendLine("    filter1: {filter1}");
+                tempLate.AppendLine("  filter1: {filter1}");
             if (!string.IsNullOrWhiteSpace(f2))
-                tempLate.AppendLine("    filter2: {filter2}");
+                tempLate.AppendLine("  filter2: {filter2}");
             if (!string.IsNullOrWhiteSpace(c1))
-                tempLate.AppendLine("  category1: {category1}");
+                tempLate.AppendLine("category1: {category1}");
             if (!string.IsNullOrWhiteSpace(c2))
-                tempLate.AppendLine("  category2: {category2}");
+                tempLate.AppendLine("category2: {category2}");
             if (!string.IsNullOrWhiteSpace(c3))
-                tempLate.AppendLine("  category3: {category3}");
+                tempLate.AppendLine("category3: {category3}");
             if (parse.Calls?.Any() == true)
-                tempLate.AppendLine("      calls: {calls}");
+                tempLate.AppendLine("    calls: {calls}");
             if (!string.IsNullOrWhiteSpace(exception))
                 tempLate.AppendLine("  exception: {exception}");
 
